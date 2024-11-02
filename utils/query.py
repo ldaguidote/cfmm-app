@@ -1,6 +1,7 @@
 import pandas as pd
 import sqlite3
 from datetime import datetime
+import json
 
 def make_db_connection():
     conn = sqlite3.connect('cfmm.db')
@@ -29,8 +30,6 @@ def initialize_parameter_query():
     return query_constraints
 
 def build_query(selected_publisher, start_date, end_date, compared_publishers, bias_category, topics, partial_query=False):
-    start_date = start_date.strftime('%Y-%m-%d')
-    end_date = end_date.strftime('%Y-%m-%d')
     sql = f"""
         SELECT a.date_published, a.publisher, a.title, a.text, a.article_url, a.topic, a.topic_list, a.location, a.main_site,
                b.bias_rating, b.generalisation, b.prominence, b.negative_behaviour, b.misrepresentation, b.headline_or_imagery	
@@ -70,3 +69,16 @@ def execute_query_to_dataframe(sql):
     df = pd.read_sql_query(sql, conn)
     conn.close()
     return df
+
+def export_query_params_to_json(selected_publisher, start_date, end_date, compared_publishers, bias_category, topics):
+    query_params = {
+        'selected_publisher': selected_publisher,
+        'start_date': start_date,
+        'end_date': end_date,
+        'compared_publishers': compared_publishers,
+        'bias_category': bias_category,
+        'topics': topics
+    }
+
+    with open('query_params.json', 'w') as json_file:
+        json.dump(query_params, json_file)

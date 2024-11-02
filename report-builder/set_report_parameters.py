@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
-from utils.query import initialize_parameter_query, build_query, execute_query_to_dataframe
+from utils.query import (initialize_parameter_query,
+                         build_query,
+                         execute_query_to_dataframe,
+                         export_query_params_to_json)
 
 # This controls the content of the initial page
 # Determine the constraints to be set by the application based on the articles in the database and set categories
@@ -11,11 +14,13 @@ query_constraints['bias_category'] = [
     'Due Prominence', 'Headlines'
 ]
 query_constraints['topics'] = [
-    'Accidents and Natural Disasters', 'Business and Economy', "Children's Rights",
+    'Accidents and Natural Disasters', 'Business and Economy', "Women's and Children's Rights",
     'Crimes and Arrests', 'Education', 'Hate Speech and Discrimination', 'Health',
     'Immigration', 'Minorities and Human Rights', 'Politics', 'Religion',
-    'Sports, Culture, and Entertainment', 'Terrorism and Extremism', "Women's Rights"
+    'Sports, Culture, and Entertainment', 'Terrorism and Extremism'
 ]
+
+## APP COMPONENTS
 
 def select_publisher():
     st.subheader('Step 1: Select publisher')
@@ -41,6 +46,9 @@ def select_date_range():
                             min_value=query_constraints['date_range'][0],
                             max_value=query_constraints['date_range'][1])
     
+    # Typecast to SQL readable format
+    start_date = start_date.strftime('%Y-%m-%d')
+    end_date = end_date.strftime('%Y-%m-%d')
     return start_date, end_date
 
 @st.fragment()
@@ -131,4 +139,8 @@ if check:
         st.error('Invalid request. No articles retrieved for the chosen publisher during the specified time period. '
                  'Try expanding your search criteria.')
     
-
+    export_query_params_to_json(selected_publisher,
+                                start_date, end_date,
+                                compared_publishers,
+                                bias_category,
+                                topics)
