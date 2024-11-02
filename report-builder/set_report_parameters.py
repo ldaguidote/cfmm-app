@@ -106,16 +106,21 @@ topics = select_topics()
 
 check = st.button('Submit')
 if check:
+
+    # Perform partial query
     sql = build_query(selected_publisher,
                       start_date, end_date,
                       compared_publishers,
+                      bias_category,
                       topics,
                       partial_query=True)
     df = execute_query_to_dataframe(sql)
+
     if len(df) > 0:
         sql = build_query(selected_publisher,
                     start_date, end_date,
                     compared_publishers,
+                    bias_category,
                     topics,
                     partial_query=False)
         df = execute_query_to_dataframe(sql)

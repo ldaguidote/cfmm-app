@@ -28,10 +28,16 @@ def initialize_parameter_query():
 
     return query_constraints
 
-def build_query(selected_publisher, start_date, end_date, compared_publishers, topics, partial_query=False):
+def build_query(selected_publisher, start_date, end_date, compared_publishers, bias_category, topics, partial_query=False):
     start_date = start_date.strftime('%Y-%m-%d')
     end_date = end_date.strftime('%Y-%m-%d')
-    sql = f"SELECT * FROM articles WHERE (date_published >= '{start_date}' AND date_published <= '{end_date}')"
+    sql = f"""
+        SELECT a.date_published, a.publisher, a.title, a.text, a.article_url, a.topic, a.topic_list, a.location, a.main_site,
+               b.bias_rating, b.generalisation, b.prominence, b.negative_behaviour, b.misrepresentation, b.headline_or_imagery	
+        FROM articles a
+        INNER JOIN bias_rating b ON a.article_url = b.article_url
+        WHERE (date_published >= '{start_date}' AND date_published <= '{end_date}')
+        """
 
     if partial_query:
         publishers = [selected_publisher]
@@ -41,6 +47,17 @@ def build_query(selected_publisher, start_date, end_date, compared_publishers, t
     if len(publishers) > 0:
         publisher_sql = ' AND (' + ' OR '.join([f"publisher LIKE '%{i}%'" for i in publishers]) + ')'
         sql += publisher_sql
+
+    if len(bias_category) > 0:
+        bias_col = {
+            'Generalizing Claims': 'generalisation',
+            'Due Prominence': 'prominence',
+            'Negative Aspects and Behaviors': 'negative_behaviour',
+            'Misrepresentation': 'misrepresentation',
+            'Headlines': 'headline_or_imagery'
+        }
+        bias_sql = ' AND (' + ' OR '.join([f"{bias_col[i]} = 1" for i in bias_category]) + ')'
+        sql += bias_sql
 
     if len(topics) > 0:
         topic_sql = ' AND (' + ' OR '.join([f'topic LIKE "%{i}%"' for i in topics]) + ')'
