@@ -1,4 +1,5 @@
 import os
+import tiktoken
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -10,8 +11,8 @@ class OpenAITextGenerator:
         load_dotenv()
 
         # Get the API key from the .env file
-        api_key = os.getenv("OPENAI_API_KEY")
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.model = os.getenv("MODEL")
 
         system_prompt = """
         You are an expert assistant, with special skills in proofreading and report writing.
@@ -38,16 +39,6 @@ class OpenAITextGenerator:
             }
         }
 
-        I may also pass a JSON file containing raw data, where I will be seeking your insights.
-        It will follow this style:
-
-        [RAW DATA - NAME OF DATASET]
-        {
-            'field_name1': 'value1',
-            'field_name2': 'value2',
-            'field_name3': 'value3'
-        }
-
         The general methodology is that collected articles are assessed across five key metrics, or bias categories. 
         The bias is exhibited if the answer is yes to the attached question:
         1. Negative Behaviour: Does the article associate Muslims or Islam with negative behaviour?
@@ -56,8 +47,33 @@ class OpenAITextGenerator:
         4. Due Prominence: Does the article omit due prominence to a relevant Muslim voice or perspective?
         5. Imagery and Headlines: Does the image or headline depict Muslims/ Islam in an unfair or incorrect story in accordance with the story?
 
-        If the article shows 4 of the 5 key metrics, it is said to be `Very Biased`. Else, it is only `Biased`. 
-        Aside from this, articles may be `Unbiased` or `Inconclusive`.
+        From this comes the concept of a bias rating. If the article shows 4 of the 5 key metrics, it is said to be `Very Biased`. 
+        If it shows between 1 to 3, it is only `Biased`. Aside from this, articles may be `Unbiased` if no bias is detected, 
+        or `Inconclusive` if bias is indeterminate. During analysis, the bias rating may be indicated by:
+        -1: Inconclusive
+         0: Unbiased
+         1: Biased
+         2: Very Biased
+
+        The topics this report will cover include the following:
+        1. Accidents and Natural Disasters
+        2. Business and Economy
+        3. Children and Women's Rights
+        4. Crimes and Arrests
+        5. Education
+        6. Hate Speech and Discrimination
+        7. Health
+        8. Immigration
+        9. Minorities and Human Rights
+        10. Politics
+        11. Religion
+        12. "Sports, Culture, and Entertainment"
+        13. Terrorism and Extremism
+        0. Unknown
+
+        I will also be asking you to analyze different datasets. You will provide insights about the publisher using these datasets.
+
+        Do not use special characters in your answer. This regex statement should be able to parse your answer \s\-A-Za-z0-9\.,\'
         """
 
         self.messages = [
@@ -74,7 +90,7 @@ class OpenAITextGenerator:
         
         # Get the response from the API
         response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=self.model,
             messages=self.messages
         )
         
