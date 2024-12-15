@@ -90,37 +90,38 @@ def show_counts_c1c2(df_corpus, publisher, c1, c2):
     ## Filter articles by publisher
     df_publisher = df_corpus[df_corpus['publisher']==publisher]
     simple_c1_c2 = ['location', 'bias_rating']
+    advanced_c1_c2 = ['topic', 'bias_category']
+    if c1 in simple_c1_c2 + advanced_c1_c2 or c2 in simple_c1_c2 + advanced_c1_c2:
+        if c1 not in simple_c1_c2 or c2 not in simple_c1_c2:
+            if c1 == 'topic' or c2 == 'topic':
+                # Split topic list
+                df_publisher['topic'] = df_publisher['topic'].apply(lambda x: x.split(" | "))
+                # Explode into singular topics
+                df_publisher = df_publisher.explode('topic')
 
-    if c1 not in simple_c1_c2 or c2 not in simple_c1_c2:
-        if c1 == 'topic' or c2 == 'topic':
-            # Split topic list
-            df_publisher['topic'] = df_publisher['topic'].apply(lambda x: x.split(" | "))
-            # Explode into singular topics
-            df_publisher = df_publisher.explode('topic')
-
-        elif c1 == 'bias_category' or c2 == 'bias_category':
-            # Prepare expected bias categories
-            expected_categories = {
-                'generalisation',
-                'prominence',
-                'negative_behaviour',
-                'misrepresentation',
-                'headline_or_imagery'
-            }
-            # Find bias categories that are present in dataframe
-            actual_categories = list(set(df_publisher.columns).intersection(expected_categories))
-            # Detect other dimension other than bias categories
-            c1_c2 = [c1, c2]
-            c1_c2.remove("bias_category")
-            # Melt bias categories into one column
-            df_publisher = df_publisher.melt(
-                id_vars=c1_c2.pop(),
-                value_vars=actual_categories,
-                var_name="bias_category",
-                value_name="count"
-            )
-        else:
-            raise ValueError(f"Either one or both of the categories are unknown: {c1}, {c2}")
+            if c1 == 'bias_category' or c2 == 'bias_category':
+                # Prepare expected bias categories
+                expected_categories = {
+                    'generalisation',
+                    'prominence',
+                    'negative_behaviour',
+                    'misrepresentation',
+                    'headline_or_imagery'
+                }
+                # Find bias categories that are present in dataframe
+                actual_categories = list(set(df_publisher.columns).intersection(expected_categories))
+                # Detect other dimension other than bias categories
+                c1_c2 = [c1, c2]
+                c1_c2.remove("bias_category")
+                # Melt bias categories into one column
+                df_publisher = df_publisher.melt(
+                    id_vars=c1_c2.pop(),
+                    value_vars=actual_categories,
+                    var_name="bias_category",
+                    value_name="count"
+                )
+    else:
+        raise ValueError(f"Either one or both of the categories are unknown: {c1}, {c2}")
 
     if c1 == 'bias_category' or c2 == 'bias_category':
         df_count = df_publisher.groupby([c1, c2]).sum().reset_index()
@@ -452,8 +453,8 @@ def build_odds_chart(df_corpus, selected_publisher, compared_publishers, c2):
     + scale_y_continuous(limits=(0, res['OR'].max()*1.10))
     + ylab('Odds Ratio')
     + xlab(c2.replace('_', ' ').title())
-    + annotate('text', x=res['name_label'].iloc[0], y=1, label='\n\n\n\n\n\n\n\n\nJust as likely', size=11, color='#4F5150')
-    + annotate('text', x=res['name_label'].iloc[0], y=2, label='\n\n\n\n\n\n\n\n\nTwice as likely', size=11, color='#4F5150')
+    + annotate('text', x=res['name_label'].iloc[0], y=1, label='\n\n\n\n\n\n\nJust as likely', size=11, color='#4F5150')
+    + annotate('text', x=res['name_label'].iloc[0], y=2, label='\n\n\n\n\n\n\nTwice as likely', size=11, color='#4F5150')
     + proj_theme
     + coord_flip()
     )
