@@ -1,5 +1,6 @@
 import os
 import tiktoken
+import json
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -91,7 +92,7 @@ class OpenAITextGenerator:
         # Get the response from the API
         response = self.client.chat.completions.create(
             model=self.model,
-            messages=self.messages
+            messages=self.messages,
         )
         
         # Extract and add the assistant's response to the conversation

@@ -25,14 +25,14 @@ class Generator:
     def generate_analysis(self, analysis_type, data):
         if analysis_type == 'topic':
             prompt = self.prompt.analyze_topics(data)
-        elif analysis_type == 'rating':
+        elif analysis_type == 'bias_rating':
             prompt = self.prompt.analyze_bias_rating(data)
-        elif analysis_type == 'category':
+        elif analysis_type == 'bias_category':
             prompt = self.prompt.analyze_bias_category(data)
         elif analysis_type == 'tendency':
             prompt = self.prompt.analyze_bias_tendency(data)
         else:
-            raise PromptError('Invalid analysis type. Must be either "topic", "rating", "category" or "tendency"')
+            raise PromptError('Invalid analysis type. Must be either "topic", "bias_rating", "bias_category" or "tendency"')
 
         response = self.api_handler.generate_text(prompt)
         return response

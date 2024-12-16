@@ -51,20 +51,20 @@ class Prompt:
             header = f"[CASES OF {case_type} ARTICLES FROM {self.selected_publisher}]"
         elif case_type in ['Misrepresentation', 'Negative Behaviour', 'Due Prominence', 'Generalisation',
                            'Imagery and Headlines']:
-            header = f"[EXAMPLES FROM {self.selected_publisher} EXHIBITING {case_type}]"
+            header = f"[EXAMPLES FROM {self.selected_publisher}]"
 
-        prompt = f"""[CASES OF BIASED ARTICLES]
+        prompt = f"""[SECTION: CASE STUDIES]
         1. The following news articles are examples of biased publications. For each news article, answer the following questions:
         - What is the news article about? What are the key elements of the case?
         - Why is the article showing the bias rating or category? Show evidences that substantiate this claim. 
         2. Be as specific as you can in decribing the key elements and evidences.
         3. Each question must be answered using 1-2 bullet points, with each bullet containing only 25-45 words. 
         In total, the final answer must only have three bullet points.
-        4. Separate your answer for each article and use this format:
+        4. Separate your answer for each article and use the format below. Each bullet must be separated by a newline:
         [TITLE OF ARTICLE]
-        - Bullet point 1
-        - Bullet point 2
-        - Bullet point 3
+        Bullet point 1
+        Bullet point 2
+        Bullet point 3
 
         {header}
         {article_json}
@@ -82,11 +82,12 @@ class Prompt:
         3. This is turned into a bar chart. Come up with a title for the chart which encapsulates the key message of the dataset. 
         Do not provide a generic chart title. This should be insightful and it should describe the data accurately. 
         It should be able to answer the question: What can you say about the publisher given this dataset?
-        4. Your insights should be in bullet form, with a maximum of 3 bullets. Each bullet must only be 10-20 words. Answer in this format:
+        4. Your insights should be in bullet form, with a maximum of 3 bullets. Each bullet must only be 10-20 words and must be separated by a newline.
+        Answer in this format:
         [CHART TITLE/ KEY INSIGHT OF THE CHART]
-        - Insight #1
-        - Insight #2
-        - Insight #3        
+        Insight #1
+        Insight #2
+        Insight #3        
 
         {data}
         """
@@ -102,14 +103,14 @@ class Prompt:
         for the publisher or the count of articles for each bias rating by topic. Give me insights by exploring the summary statistics 
         provided. 
         2. Do not just describe the dataset, use the context of the news articles that you have seen to enrich your analysis of this dataset.
-        3. This will be plotted. Come up with a title for the chart which encapsulates the key message of the dataset. 
+        3. This will be plotted. Come up with a title for the chart which encapsulates the key message of the dataset by conducting a through interpretation.
         Do not provide a generic chart title. This should be insightful and it should describe the data accurately. 
         It should be able to answer the question: What can you say about the publisher given this dataset?
         4. Your insights should be in bullet form, with a maximum of 3 bullets. Each bullet must only be 10-20 words. Answer in this format:
-        [CHART TITLE/ KEY INSIGHT OF THE CHART]
-        - Insight #1
-        - Insight #2
-        - Insight #3        
+        [KEY INSIGHT OF THE CHART]
+        Insight #1
+        Insight #2
+        Insight #3        
 
         {data}
         """
@@ -119,7 +120,7 @@ class Prompt:
 
     def analyze_bias_category(self, data):
 
-        prompt = f"""[KEY INSIGHT OF THE CHART]
+        prompt = f"""[ANALYZE BIAS CATEGORY]
         1. You will be writing part of the Publisher Performance where you will gauge the bias profile of a publisher. 
         You will do this by uncovering insights on the bias category datasets, where you are either given the count of articles per bias category 
         for the publisher or the count of articles for each bias category by topic. Give me insights by exploring the summary statistics 
@@ -129,10 +130,10 @@ class Prompt:
         Do not provide a generic chart title. This should be insightful and it should describe the data accurately. 
         It should be able to answer the question: What can you say about the publisher given this dataset?
         4. Your insights should be in bullet form, with a maximum of 3 bullets. Each bullet must only be 10-20 words. Answer in this format:
-        [CHART TITLE/ KEY INSIGHT OF THE CHART]
-        - Insight #1
-        - Insight #2
-        - Insight #3        
+        [KEY INSIGHT OF THE CHART]
+        Insight #1
+        Insight #2
+        Insight #3        
 
         {data}
         """
@@ -155,10 +156,10 @@ class Prompt:
         Do not provide a generic chart title. This should be insightful and it should describe the data accurately. 
         It should be able to answer the question: What can you say about the publisher given this dataset?
         5. Your insights should be in bullet form, with a maximum of 3 bullets. Each bullet must only be 10-20 words. Answer in this format:
-        [CHART TITLE/ KEY INSIGHT OF THE CHART]
-        - Insight #1
-        - Insight #2
-        - Insight #3     
+        [KEY INSIGHT OF THE CHART]
+        Insight #1
+        Insight #2
+        Insight #3     
 
         {data}
         """
@@ -180,7 +181,7 @@ class Prompt:
 
         prompt = f"""[CONCLUSIONS]
         1. You will be writing the Conclusion where you will provide an analysis on the totality of the {self.selected_publisher}'s bias profile. 
-        2. Consolidate your past insights about the publisher. It must answer these questions:
+        2. Consolidate your past insights about the publisher. Revisit your previous responses. It must answer these questions:
         - What is the bias profile of the publisher compared to the overall media landscape?
         - What are the notable instances of bias and what is its significance and relationship to our final analysis?
         - Why is this analysis important? Why should we care about the result of your analysis?
