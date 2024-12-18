@@ -315,13 +315,13 @@ class Prs:
 
             if count_levels(d) == 1:
                 title = d['title']
-                bullets = d['bullets']
+                bullets = d['text']
                 self.prs = self._render_bullets_slide(title, bullets)
 
             elif count_levels(d) > 1:
                 for k, v in d.items():
                     title = v['title']
-                    bullets = v['bullets']
+                    bullets = v['text']
                     self.prs = self._render_bullets_slide(title, bullets)       
         else:
             self.prs = self._render_bullets_slide(title, bullets)
@@ -331,7 +331,7 @@ class Prs:
 
     def add_PublisherPerformance_section(self, title='', chart_title='', chart_filepath='', bullets='', use_json=False):
         if use_json:
-            key = 'Publisher Performance'
+            key = 'Publisher Performance Overview'
             d = self.content_dict[key]
 
             if count_levels(d) == 1:
@@ -381,7 +381,7 @@ class Prs:
 
     def add_UseCases_section(self, title='', image_filepath='', bullets='', use_json=False):
         if use_json:
-            key = 'Use Casees'
+            key = 'Case Studies'
             d = self.content_dict[key]
 
             if count_levels(d) == 1:
@@ -402,18 +402,18 @@ class Prs:
 
     def add_Conclusion_section(self, title='', bullets='', use_json=False):
         if use_json:
-            key = 'Conclusion'
+            key = 'Conclusions'
             d = self.content_dict[key]
 
             if count_levels(d) == 1:
                 title = d['title']
-                bullets = d['bullets']
+                bullets = d['text']
                 self.prs = self._render_bullets_slide(title, bullets)
 
             elif count_levels(d) > 1:
                 for k, v in d.items():
                     title = v['title']
-                    bullets = v['bullets']
+                    bullets = v['text']
                     self.prs = self._render_bullets_slide(title, bullets)       
         else:
             self.prs = self._render_bullets_slide(title, bullets)

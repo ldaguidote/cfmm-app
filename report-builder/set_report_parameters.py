@@ -149,7 +149,8 @@ if check_1 or check_2:
                     'Try expanding your search criteria.')
 
     if check_1:
-        df = st.session_state['df']      
+        df = st.session_state['df']
+        st.write(dict_params)      
         st.success(f'{len(df)} articles retrieved.')
         st.dataframe(df)
 
