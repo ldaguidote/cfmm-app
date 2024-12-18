@@ -103,8 +103,6 @@ def select_topics():
         
     return topics
 
-## 
-
 st.title('Briefing Pack Scope and Coverage')
 selected_publisher = select_publisher()
 start_date, end_date = select_date_range()
@@ -112,35 +110,48 @@ compared_publishers = select_comparison(selected_publisher)
 bias_category = select_bias_category()
 topics = select_topics()
 
-check = st.button('Submit')
-if check:
+check_1 = st.button('Preview Data')
+check_2 = st.button('Proceed to Section Selector')
 
-    # Perform partial query
-    sql = build_query(selected_publisher,
-                      start_date, end_date,
-                      compared_publishers,
-                      bias_category,
-                      topics,
-                      partial_query=True)
-    df = execute_query_to_dataframe(sql)
-
-    if len(df) > 0:
+if check_1 or check_2:
+    dict_params = export_query_params_to_json(
+        selected_publisher,
+        start_date,
+        end_date,
+        compared_publishers,
+        bias_category,
+        topics
+    )
+    if ('df' not in st.session_state or
+        st.session_state['params'] is not dict_params):
+        # Perform partial query
         sql = build_query(selected_publisher,
-                    start_date, end_date,
-                    compared_publishers,
-                    bias_category,
-                    topics,
-                    partial_query=False)
+                        start_date, end_date,
+                        compared_publishers,
+                        bias_category,
+                        topics,
+                        partial_query=True)
         df = execute_query_to_dataframe(sql)
+
+        if len(df) > 0:
+            sql = build_query(selected_publisher,
+                        start_date, end_date,
+                        compared_publishers,
+                        bias_category,
+                        topics,
+                        partial_query=False)
+            df = execute_query_to_dataframe(sql)
+            st.session_state['df'] = df
+            st.session_state['params'] = dict_params
+
+        else:
+            st.error('Invalid request. No articles retrieved for the chosen publisher during the specified time period. '
+                    'Try expanding your search criteria.')
+
+    if check_1:
+        df = st.session_state['df']      
         st.success(f'{len(df)} articles retrieved.')
         st.dataframe(df)
 
-    else:
-        st.error('Invalid request. No articles retrieved for the chosen publisher during the specified time period. '
-                 'Try expanding your search criteria.')
-    
-    export_query_params_to_json(selected_publisher,
-                                start_date, end_date,
-                                compared_publishers,
-                                bias_category,
-                                topics)
+    elif check_2:
+        st.switch_page("report-builder/customize_report.py")
