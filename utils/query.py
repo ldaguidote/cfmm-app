@@ -80,5 +80,4 @@ def export_query_params_to_json(selected_publisher, start_date, end_date, compar
         'topics': topics
     }
 
-    with open('query_params.json', 'w') as json_file:
-        json.dump(query_params, json_file)
+    return query_params
