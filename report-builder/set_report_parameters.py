@@ -39,19 +39,18 @@ if 'result' not in st.session_state:
 
 def select_publisher():
     st.subheader('Step 1: Select publisher')
-    st.markdown('I want to analyze articles from:')
 
     selected_publisher = st.selectbox(
         label='Select one from the list of publishers',
         options=query_constraints['publishers'],
         key='selected_publisher',
+        label_visibility = 'collapsed',
         )
     
     return selected_publisher
     
 def select_date_range():
-    st.subheader('Step 2: Select date range of publication')
-    st.markdown('Articles must be published within:')
+    st.subheader('Step 3: Select date range of publication')
 
     col1, col2 = st.columns(spec=2, gap='large')
     start_date = col1.date_input(label='Start date', value=query_constraints['date_range'][0],
@@ -68,9 +67,7 @@ def select_date_range():
 
 @st.fragment()
 def select_comparison(selected_publisher):
-    st.subheader('Step 3: Select journal comparisons')
-    st.markdown(f"The following are publishers with articles dated during the selected time period. "
-                f'Please select the relevant publishers you wish to compare against your chosen publisher.')
+    st.subheader('Step 2: Select publisher(s) for comparison')
 
     container = st.container()
     select_all = st.checkbox('Select all publishers', key='pub_checkbox')
@@ -88,7 +85,6 @@ def select_comparison(selected_publisher):
 
 def select_bias_category():
     st.subheader('Step 4: Select bias categories')
-    st.markdown('I want to analyze articles having only any of the following bias categories:')
 
     container = st.container()
     select_all = st.checkbox('Select all bias categories', key='bias_checkbox')
@@ -104,7 +100,6 @@ def select_bias_category():
 
 def select_topics():
     st.subheader('Step 5: Select article topics')
-    st.markdown('Further, I want to analyze articles having only the following themes:')
 
     container = st.container()
     select_all = st.checkbox('Select all topics', key='topic_checkbox')
@@ -179,14 +174,15 @@ def run():
 
 st.title('Briefing Pack Scope and Coverage')
 selected_publisher = select_publisher()
-start_date, end_date = select_date_range()
 compared_publishers = select_comparison(selected_publisher)
+start_date, end_date = select_date_range()
 bias_category = select_bias_category()
 topics = select_topics()
 # sections = select_sections()
 
 btn_preview = st.button('Preview Data')
 btn_generate = st.button('Generate Report', on_click=run, disabled=st.session_state.run)
+progress_container = st.empty()
 result_container = st.empty()
 
 if btn_preview:
@@ -200,6 +196,7 @@ if btn_preview:
     )
     if ('df' not in st.session_state or
         st.session_state['params'] is not dict_params):
+        del st.session_state['result']
         # Perform partial query
         df = prepare_data(
             selected_publisher,
@@ -221,19 +218,21 @@ if btn_preview:
                 topics,
                 partial_query=False
             )
+            st.success(f'{len(df)} articles retrieved.')
+            df = df[['date_published', 'publisher', 'title']]
+            st.dataframe(df)
+        
         else:
             st.error('Invalid request. No articles retrieved for the chosen publisher during the specified time period. '
                     'Try expanding your search criteria.')
-            
-        df = st.session_state['df'] 
-        st.success(f'{len(df)} articles retrieved.')
-        st.dataframe(df)
 
 binary_output  = BytesIO()
 if st.session_state.run:
     result_container.empty()
     with st.empty():
         with st.spinner('Generating report. Please do not close this page.'):
+            progress_text="Preparing data...(Task 1 of 3)"
+            progress_container.progress(0, text=progress_text)
             df = prepare_data(
                 selected_publisher,
                 start_date,
@@ -245,6 +244,7 @@ if st.session_state.run:
             )
             dict_params = st.session_state['params']
             df = st.session_state['df']
+            progress_container.progress(30, text="Generating charts and captions...(Task 2 of 3)")
             rcf = ReportComponentFactory(dict_params, df)
             try:
                 rcf.run()
@@ -255,20 +255,24 @@ if st.session_state.run:
                 dict_rcf = rcf.results
                 st.session_state.result = dict_rcf
                 factory_json = json.dumps(dict_rcf)
+                progress_container.progress(60, text="Creating slides...(Task 3 or 3)")
                 prs = Prs('template.pptx', factory_json)
-                prs.add_Title_section('Briefing Pack for BBC', date.today().strftime("%B %d, %Y"))
+                prs.add_Title_section('Briefing Pack for BBC', [start_date, end_date])
                 prs.add_Introduction_section('Introduction', 'Placeholder text')
                 prs.add_Methodology_section(use_json=True)
                 prs.add_KeyFindings_section(use_json=True)
                 prs.add_PublisherPerformance_section(use_json=True)
                 prs.add_PublisherComparison_section(use_json=True)
+                # prs.add_UseCases_section(use_json=True)
                 prs.add_Conclusion_section(use_json=True)
                 prs.add_Recommendations_section('Recommendations', 'Placeholder text')
                 prs.save(binary_output)
+                progress_container.progress(100, text="Done!")
 
     st.session_state.run = False
 
-if st.session_state.result is not None:
+if 'result' in st.session_state:
+    progress_container.empty()
     with result_container.container():
         st.success("Done! Click the button below to download")
         st.download_button(
@@ -276,6 +280,8 @@ if st.session_state.result is not None:
             data = binary_output.getvalue(),
             file_name = f'report_{date.today().strftime("%m%d%y")}.pptx'
         )
+else:
+    result_container.empty()
 
 
 
