@@ -219,7 +219,7 @@ if btn_preview:
                 partial_query=False
             )
             st.success(f'{len(df)} articles retrieved.')
-            # df = df[['date_published', 'publisher', 'title']]
+            df = df[['date_published', 'publisher', 'title']]
             st.dataframe(df)
         
         else:
