@@ -9,10 +9,20 @@ class StatsCalculator:
 
     def calc_1D_stats(self, param):
         """Calculate count of all topics in query"""
-
         df_stat = self.__show_counts_c1(self.query_data,
                                         self.query_params['selected_publisher'],
                                         param)
+        df_stat = df_stat.drop(['VBB_unique_count'], axis=1, errors='ignore')
+        
+        return df_stat
+
+    def calc_1D_biased_stats(self, param):
+        """Calculate count of all topics in query"""
+        filtered_data = self.query_data[self.query_data['bias_rating']>=1]
+        df_stat = self.__show_counts_c1(filtered_data,
+                                        self.query_params['selected_publisher'],
+                                        param)
+        
         return df_stat
 
     # def calc_bias_category(self):
@@ -38,8 +48,19 @@ class StatsCalculator:
                                           self.query_params['selected_publisher'],
                                           param1,
                                           param2)
+        df_stat = df_stat.drop(['VBB_unique_count'], axis=1, errors='ignore')
+        
         return df_stat
 
+    def calc_2D_biased_stats(self, param1, param2='topic'):
+        """Calculate count of bias category by topic"""
+        filtered_data = self.query_data[self.query_data['bias_rating']>=1]
+        df_stat = self.__show_counts_c1c2(filtered_data,
+                                          self.query_params['selected_publisher'],
+                                          param1,
+                                          param2)
+        return df_stat
+        
     # def calc_bias_rating_vs_topics(self):
     #     """Calculate count of bias rating by topic"""
 
@@ -81,7 +102,8 @@ class StatsCalculator:
         if c1 in simple_c1:
             # Group by c1
             df_count = df_publisher.groupby(c1).size().reset_index(name='count')
-            return df_count
+            
+            # return df_count
 
         elif c1 == 'bias_category':
             # Prepare expected bias categories
@@ -95,17 +117,26 @@ class StatsCalculator:
             # Find bias categories that are present in dataframe
             actual_categories = list(set(df_publisher.columns).intersection(expected_categories))
             df_count = df_publisher[actual_categories].sum().rename_axis(c1).reset_index(name='count')
-            return df_count
+            
+            # return df_count
 
         elif c1 == 'topic':
             # Prepare exploded topics
             s_topics = df_publisher[c1].apply(lambda x: x.split(" | "))
             df_count = s_topics.explode().reset_index().groupby(c1).size().reset_index(name='count')
             df_count = df_count.replace('', 'Unknown')
-            return df_count
+            
+            # return df_count
 
         else:
             raise ValueError(f"Unknown category: {c1}")
+
+        # Determine biased count
+        df_count['VB_unique_count'] = df_publisher[df_publisher['bias_rating']==2].shape[0]
+        df_count['B_unique_count'] = df_publisher[df_publisher['bias_rating']==1].shape[0]
+        df_count['VBB_unique_count'] = df_publisher[df_publisher['bias_rating']>=1].shape[0]
+
+        return df_count
         
     def __show_counts_c1c2(self, df_corpus, publisher, c1, c2):
         """Shows counts for two dimensions
@@ -113,17 +144,30 @@ class StatsCalculator:
         Accepted values for dimensions:
         'location', 'bias_rating', 'bias_category', 'topic'
         """
+
         ## Filter articles by publisher
         df_publisher = df_corpus[df_corpus['publisher']==publisher]
         simple_c1_c2 = ['location', 'bias_rating']
         advanced_c1_c2 = ['topic', 'bias_category']
+
+        # c1 is row, c2 is columns
+        # row is always the reference/denominator
+        publisher_VBB_counts = df_publisher.groupby([c1, 'bias_rating']).size().reset_index()
+        publisher_VBB_counts.columns = [c1, 'bias_rating', 'count']
+        publisher_VBB_counts['bias_rating'] = publisher_VBB_counts['bias_rating'].astype(str)
+        publisher_VBB_counts = publisher_VBB_counts.pivot(c1, 'bias_rating', 'count').fillna(0)
+        publisher_VBB_counts['VBB_unique_count'] = publisher_VBB_counts['1'] + publisher_VBB_counts['2']
+        
         if c1 in simple_c1_c2 + advanced_c1_c2 or c2 in simple_c1_c2 + advanced_c1_c2:
             if c1 not in simple_c1_c2 or c2 not in simple_c1_c2:
                 if c1 == 'topic' or c2 == 'topic':
                     # Split topic list
                     df_publisher['topic'] = df_publisher['topic'].apply(lambda x: x.split(" | "))
                     # Explode into singular topics
-                    df_publisher = df_publisher.explode('topic')
+                    # df_publisher = df_publisher.explode('topic')
+
+                    print('STOPPING')
+                    return df_publisher
 
                 if c1 == 'bias_category' or c2 == 'bias_category':
                     # Prepare expected bias categories
@@ -156,6 +200,12 @@ class StatsCalculator:
         df_count = df_count.replace('', 'Unknown')
         df_count = df_count.pivot(index=c1, columns=c2, values='count')
         df_count = df_count.fillna(0)
+
+        # Append unique VBB counts
+        df_count_colname = df_count.columns.name
+        df_count = df_count.join(publisher_VBB_counts[['VBB_unique_count']])
+        df_count.columns.name = df_count_colname
+
         return df_count
 
     def __show_odds(self, df_corpus, selected_publisher, compared_publishers, c2):

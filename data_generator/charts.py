@@ -42,7 +42,7 @@ class ChartBuilder:
 
     def build_bar_chart(self, data, c1):
         res = data.set_index(c1)
-
+        
         if ('bias' in res.index.name) and ('rating' in res.index.name):
             name_map = {
                 '-1': 'Inconclusive',
@@ -77,51 +77,61 @@ class ChartBuilder:
             name_map = dict(zip(res.columns.astype(str), res.columns.astype(str)))
             colors = ['#4185A0', '#AA4D71', '#B85C3B', '#C5BE71', '#7658A0']
             color_map = dict(zip(res.columns.astype(str), colors))
-
-
+        
+        
         # attr
         top_n = 5
         show_others = True
         show_inconclusive = True
-
+        
         # def build_data_bar
         if top_n:
             # Get top n
             res = res.sort_values('count', ascending=False).reset_index()
             res.loc[:(top_n-1), 'group'] = 'top'
             res['group'] = res['group'].fillna('Others')
-
+        
             # Collapse others
             res_top = res[res['group']=='top'].drop(columns=['group'])
             res_others = res[res['group']=='Others'].groupby('group')[['count']].transform('sum').drop_duplicates()
             res_others[c1] = 'Others'
-
+        
         if show_others:
             res = pd.concat([res_top, res_others])
-            res['pct'] = (res['count']/res['count'].sum()).fillna(0).multiply(100).round(1)
+            res = res.ffill() # Fill missing B, VB, VBB article count
+            # if ('bias' in c1) and ('cat') in c1:
+            if 'VBB_unique_count' in res.columns:
+                res['pct'] = (res['count']/res['VBB_unique_count']).fillna(0).multiply(100).round(1)
+            else:
+                res['pct'] = (res['count']/res['count'].sum()).fillna(0).multiply(100).round(1)
+           
             res = res.set_index(c1)
         else:
             res = res_top
-            res['pct'] = (res['count']/res['count'].sum()).fillna(0).multiply(100).round(1)
+            # if ('bias' in c1) and ('cat') in c1:
+            if 'VBB_unique_count' in res.columns:
+                res['pct'] = (res['count']/res['VBB_unique_count']).fillna(0).multiply(100).round(1)
+            else:
+                res['pct'] = (res['count']/res['count'].sum()).fillna(0).multiply(100).round(1)
             res = res.set_index(c1)
-
+        
         if not show_inconclusive:
             if 'Inconclusive' in res.index.astype(str).map(name_map):
                 ind = list(res.index.astype(str).map(name_map)).index('Inconclusive')
                 res = res.drop(columns=res.columns[ind])
-
+        
         # Attach plot prerequisites
         res['name'] = res.index.astype(str).map(name_map).fillna('Others')
         res['name'] = pd.Categorical(values=res['name'], categories=['Others'] + list(name_map.values()), ordered=True)
         res['color'] = res['name'].astype(str).map(color_map).fillna('#e8e8e8')
-        res['label'] = res['pct'].astype(int).astype(str) + '%'
+        res['label'] = res['pct'].round(0).astype(int).astype(str) + '%'
         res['label'] = res['count'].astype(str) + ' (' + res['label'] + ')'
 
         p = (ggplot(res)
         + geom_bar(aes(x='name', y='count', fill='name'), stat='identity', width=0.60, show_legend=False)
-        + geom_label(aes(x='name', y='count', label='label'), color="#474948", ha='center', size=10, show_legend=False)
+        + geom_label(aes(x='name', y='count', label='label'), color="#474948", ha='center', size=8, show_legend=False)
         + scale_fill_manual(values=dict(zip(res['name'], res['color'])))
-        + scale_y_continuous(limits=(0, res['count'].max()*1.10))
+        + scale_y_continuous(limits=(0, res['count'].max()*1.10), labels=lambda l: ["%d" % int(v) for v in l])
         + ylab('Number of Articles')
         + xlab(c1.replace('_', ' ').title())
         + self.theme
@@ -130,7 +140,10 @@ class ChartBuilder:
 
         return p
 
-    def build_heatmap_chart(self, data, c1, c2='topic'):
+    def build_heatmap_chart(self, data, c1, c2='bias_rating'):
+        if 'bias' not in c2:
+            raise ValueError('c2 only accepts bias_rating or bias_category. Please switch columns as needed.')
+            
         res = data
         if ('bias' in res.index.name) and ('rating' in res.index.name):
             c1_name_map = {
@@ -213,22 +226,43 @@ class ChartBuilder:
                 ind = list(res.index.astype(str).map(c1_name_map)).index('Inconclusive')
                 res = res.drop(columns=res.columns[ind])
 
-        res_pct = res.div(res.sum(axis=1), axis=0).fillna(0).multiply(100)
+        # If df is filtered to include VBB articles only, denominator is the VBB unique count
+        if 'VBB_unique_count' in res.columns:
+            res_pct = res.div(res['VBB_unique_count'], axis=0).fillna(0).multiply(100)
+            res_pct = res_pct.drop(['VBB_unique_count'], axis=1)
+            VBB_unique_count = res['VBB_unique_count']
+
+        # If all articles, denominator is across all articles
+        else:
+            res_pct = res.div(res.sum(axis=1), axis=0).fillna(0).multiply(100)
+
         res.index.name = c1
         res.columns.name = c2
 
         # With plot labels
-        res_label = res.astype(str) + '\n(' + res_pct.astype(int).astype(str) + '%)'
-        res_label.columns = [x.title() + '('+y+')' for (x,y) in zip(res_label.columns.astype(str).map(c2_name_map).fillna('Others'), res.sum(axis=0).astype(int).astype(str))]
+        # print('VBB_unique_count?', 'VBB_unique_count' in res.columns)
+        # print('res')
+        # display(res)
+        # print('res_pct')
+        # display(res_pct)
+        # print('---')
+        res_label = res.drop(['VBB_unique_count'], axis=1, errors='ignore').astype(int).astype(str) + '\n(' + res_pct.round(0).astype(int).astype(str) + '%)'
+        res_label.columns = [x.title() for x in res_label.columns.astype(str).map(c2_name_map).fillna('Others')] # No need to get sum of column names
         res_label['name'] = res_label.index.astype(str).map(c1_name_map).fillna('Others')
-        res_label['name_label'] = res_label['name'].astype(str) + ' (' + res.sum(axis=1).astype(int).astype(str) + ')'
+        if 'VBB_unique_count' in res.columns:
+            res_label['name_label'] = res_label['name'].astype(str) + ' (' + VBB_unique_count.astype(int).astype(str) + ')'
+        else:
+            res_label['name_label'] = res_label['name'].astype(str) + ' (' + res.sum(axis=1).astype(int).astype(str) + ')'
         res_label['sort_index'] = res_label['name_label'].str.extract(r"\((\d+)\)", expand=False).sort_values()
         res_label = res_label.sort_values('sort_index')
         res_label = res_label.set_index('name_label').drop(columns=['name', 'sort_index'])
 
         # Do the same for res_pct
         res_pct['name'] = res_pct.index.astype(str).map(c1_name_map).fillna('Others')
-        res_pct['name_label'] = res_pct['name'].astype(str) + ' (' + res.sum(axis=1).astype(int).astype(str) + ')'
+        if 'VBB_unique_count' in res.columns:
+            res_pct['name_label'] = res_pct['name'].astype(str) + ' (' + VBB_unique_count.astype(int).astype(str) + ')'
+        else:
+            res_pct['name_label'] = res_pct['name'].astype(str) + ' (' + res.sum(axis=1).astype(int).astype(str) + ')'
         res_pct['sort_index'] = res_pct['name_label'].str.extract(r"\((\d+)\)", expand=False).sort_values()
         res_pct = res_pct.sort_values('sort_index')
         res_pct = res_pct.set_index('name_label').drop(columns=['name', 'sort_index'])
@@ -239,15 +273,16 @@ class ChartBuilder:
         res_f['pct'] = res_f['pct'].replace(0, np.nan)
         res_f['label'] = np.where(res_f['pct'].isna(), '', res_f['label'])
         res_f[c1] = pd.Categorical(res_f[c1], categories=[c for c in res_f[c1].drop_duplicates() if 'Others' in c] + [c for c in res_f[c1].drop_duplicates() if 'Others' not in c], ordered=True)
-        res_f[c2] = pd.Categorical(res_f[c2], categories=reversed([c for c in res_f[c2].drop_duplicates() if 'Others' in c] + [c for c in res_f[c2].drop_duplicates() if'Others' not in c]), ordered=True)
+        res_f[c2] = pd.Categorical(res_f[c2], categories=[c for c in res_f[c2].drop_duplicates() if 'Others' in c] + [c for c in res_f[c2].drop_duplicates() if'Others' not in c], ordered=True)
 
         p =(ggplot(res_f)
         + geom_tile(aes(x=c2, y=c1, fill='pct'), color='white', size=1, show_legend=False)
-        + geom_label(aes(x=c2, y=c1, label='label'), color="#474948", ha='center', size=8.5, show_legend=False)
-        + scale_fill_gradientn(colors=['#A8B5D3', '#03254E'], na_value='#e8e8e8')
+        + geom_label(aes(x=c2, y=c1, label='label'), color="#474948", ha='center', size=8, show_legend=False)
+        + scale_fill_gradientn(colors=['#EB8483', '#C22625'], na_value='#e8e8e8')
         + xlab(c2.replace('_', ' ').title())
         + ylab(c1.replace('_', ' ').title())
         + coord_equal()
+        + coord_flip()
         + self.theme
         + theme(axis_text_x = element_text(rotation=45, hjust=1))
         )
@@ -305,9 +340,9 @@ class ChartBuilder:
         + geom_hline(yintercept=2, color='#e8e8e8', size=2)
         + geom_hline(yintercept=2, color='#e8e8e8', size=2)
         + geom_bar(aes(x='name_label', y='OR', fill='name'), stat='identity', width=0.60, show_legend=False)
-        + geom_label(aes(x='name_label', y='OR', label='label'), color="#474948", ha='center', size=10, show_legend=False)
+        + geom_label(aes(x='name_label', y='OR', label='label'), color="#474948", ha='center', size=8, show_legend=False)
         + scale_fill_manual(values=dict(zip(res['name_label'], res['color'])))
-        + scale_y_continuous(limits=(0, res['OR'].max()*1.10))
+        + scale_y_continuous(limits=(0, res['OR'].max()*1.10), labels=lambda l: ["%d" % int(v) for v in l])
         + ylab('Odds Ratio')
         + xlab(c2.replace('_', ' ').title())
         + annotate('text', x=res['name_label'].iloc[0], y=1, label='\n\n\n\n\n\n\nJust as likely', size=11, color='#4F5150')
