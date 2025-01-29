@@ -179,7 +179,7 @@ class StatsCalculator:
                     c1_c2 = [c1, c2]
                     c1_c2.remove("bias_category")
                     # Melt bias categories into one column
-                    df_publisher = df_publisher.melt(
+                    df_melt = df_publisher.melt(
                         id_vars=c1_c2.pop(),
                         value_vars=actual_categories,
                         var_name="bias_category",
@@ -189,7 +189,7 @@ class StatsCalculator:
             raise ValueError(f"Either one or both of the categories are unknown: {c1}, {c2}")
 
         if c1 == 'bias_category' or c2 == 'bias_category':
-            df_count = df_publisher.groupby([c1, c2]).sum().reset_index()
+            df_count = df_melt.groupby([c1, c2]).sum().reset_index()
         else:
             df_count = df_publisher.groupby([c1, c2]).size().reset_index(name='count')
         df_count = df_count.replace('', 'Unknown')
