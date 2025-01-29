@@ -391,16 +391,15 @@ class Prs:
             key = 'Case Studies'
             d = self.content_dict[key]
 
-            if count_levels(d) == 1:
-                title = d['title']
-                bullets = d['bullets']
-                self.prs = self._render_imagebullets_slide(title, image_filepath, bullets)
+            for k, v in d.items():
+                self.prs = self._render_section_slide(title=k)
+                for a in v:
+                    title = a['title']
+                    bullets = a['bullets']
+                    self.prs = self._render_imagebullets_slide(title, image_filepath, bullets)
+                if len(v) < 5:
+                    self.prs = self._render_paragraph_slide(text='Nothing follows.')
 
-            elif count_levels(d) > 1:
-                for k, v in d.items():
-                    title = v['title']
-                    bullets = v['bullets']
-                    self.prs = self._render_imagebullets_slide(title, image_filepath, bullets)       
         else:
             self.prs = self._render_imagebullets_slide(title, image_filepath, bullets)
 
