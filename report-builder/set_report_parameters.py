@@ -219,7 +219,7 @@ if btn_preview:
                 partial_query=False
             )
             st.success(f'{len(df)} articles retrieved.')
-            df = df[['date_published', 'publisher', 'title']]
+            # df = df[['date_published', 'publisher', 'title']]
             st.dataframe(df)
         
         else:
@@ -263,7 +263,7 @@ if st.session_state.run:
                 prs.add_KeyFindings_section(use_json=True)
                 prs.add_PublisherPerformance_section(use_json=True)
                 prs.add_PublisherComparison_section(use_json=True)
-                # prs.add_UseCases_section(use_json=True)
+                prs.add_UseCases_section(use_json=True)
                 prs.add_Conclusion_section(use_json=True)
                 prs.add_Recommendations_section('Recommendations', 'Placeholder text')
                 prs.save(binary_output)
@@ -271,7 +271,7 @@ if st.session_state.run:
 
     st.session_state.run = False
 
-if 'result' in st.session_state:
+if 'result' in st.session_state and st.session_state['result'] is not None:
     progress_container.empty()
     with result_container.container():
         st.success("Done! Click the button below to download")
