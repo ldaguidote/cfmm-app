@@ -1,7 +1,7 @@
 from .utils import count_levels
 from pptx import Presentation
 from pptx import util
-from datetime import date
+from datetime import date, datetime
 import json
 
 
@@ -226,7 +226,7 @@ class Prs:
         return self.prs
 
 
-    def add_Title_section(self, title='', subtitle='', use_json=False):
+    def add_Title_section(self, title='', subtitle=[], use_json=False):
         if use_json:
             key = 'Title'
             d = self.content_dict[key]
@@ -241,6 +241,13 @@ class Prs:
                     subtitle = v['subtitle']
                     self.prs = self._render_title_slide(title, subtitle)
         else:
+            start_date, end_date = subtitle
+            dt_start = datetime.strptime(start_date, '%Y-%m-%d')
+            dt_end = datetime.strptime(end_date, '%Y-%m-%d')
+            if dt_start.year == dt_end.year and dt_start.month == dt_end.month:
+                subtitle = dt_start.strftime('%B %Y')
+            else:
+                subtitle = f'{dt_start.strftime('%B %Y')} to {dt_end.strftime('%B %Y')}'
             self.prs = self._render_title_slide(title, subtitle)
 
         return self.prs
@@ -387,15 +394,15 @@ class Prs:
             if count_levels(d) == 1:
                 title = d['title']
                 bullets = d['bullets']
-                self.prs = self._render_chartbullets_slide(title, image_filepath, bullets)
+                self.prs = self._render_imagebullets_slide(title, image_filepath, bullets)
 
             elif count_levels(d) > 1:
                 for k, v in d.items():
                     title = v['title']
                     bullets = v['bullets']
-                    self.prs = self._render_chartbullets_slide(title, image_filepath, bullets)       
+                    self.prs = self._render_imagebullets_slide(title, image_filepath, bullets)       
         else:
-            self.prs = self._render_chartbullets_slide(title, image_filepath, bullets)
+            self.prs = self._render_imagebullets_slide(title, image_filepath, bullets)
 
         return self.prs
 
