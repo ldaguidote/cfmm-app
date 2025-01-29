@@ -101,6 +101,10 @@ class StatsCalculator:
 
         if c1 in simple_c1:
             # Group by c1
+            if c1 == 'bias_rating':
+                lst_type = [-1, 0, 1, 2]
+                rating_type = pd.api.types.CategoricalDtype(categories=lst_type, ordered=True)
+                df_publisher[c1] = df_publisher[c1].astype(rating_type)
             df_count = df_publisher.groupby(c1).size().reset_index(name='count')
             
             # return df_count
@@ -117,7 +121,9 @@ class StatsCalculator:
             # Find bias categories that are present in dataframe
             actual_categories = list(set(df_publisher.columns).intersection(expected_categories))
             df_count = df_publisher[actual_categories].sum().rename_axis(c1).reset_index(name='count')
-            
+            cat_type = pd.api.types.CategoricalDtype(categories=list(expected_categories), ordered=False)
+            df_count[c1] = df_count[c1].astype(cat_type)
+            df_count = df_count.groupby(c1).sum().reset_index()
             # return df_count
 
         elif c1 == 'topic':
@@ -150,24 +156,13 @@ class StatsCalculator:
         simple_c1_c2 = ['location', 'bias_rating']
         advanced_c1_c2 = ['topic', 'bias_category']
 
-        # c1 is row, c2 is columns
-        # row is always the reference/denominator
-        publisher_VBB_counts = df_publisher.groupby([c1, 'bias_rating']).size().reset_index()
-        publisher_VBB_counts.columns = [c1, 'bias_rating', 'count']
-        publisher_VBB_counts['bias_rating'] = publisher_VBB_counts['bias_rating'].astype(str)
-        publisher_VBB_counts = publisher_VBB_counts.pivot(c1, 'bias_rating', 'count').fillna(0)
-        publisher_VBB_counts['VBB_unique_count'] = publisher_VBB_counts['1'] + publisher_VBB_counts['2']
-        
         if c1 in simple_c1_c2 + advanced_c1_c2 or c2 in simple_c1_c2 + advanced_c1_c2:
             if c1 not in simple_c1_c2 or c2 not in simple_c1_c2:
                 if c1 == 'topic' or c2 == 'topic':
                     # Split topic list
                     df_publisher['topic'] = df_publisher['topic'].apply(lambda x: x.split(" | "))
                     # Explode into singular topics
-                    # df_publisher = df_publisher.explode('topic')
-
-                    print('STOPPING')
-                    return df_publisher
+                    df_publisher = df_publisher.explode('topic')
 
                 if c1 == 'bias_category' or c2 == 'bias_category':
                     # Prepare expected bias categories
@@ -201,10 +196,19 @@ class StatsCalculator:
         df_count = df_count.pivot(index=c1, columns=c2, values='count')
         df_count = df_count.fillna(0)
 
-        # Append unique VBB counts
-        df_count_colname = df_count.columns.name
-        df_count = df_count.join(publisher_VBB_counts[['VBB_unique_count']])
-        df_count.columns.name = df_count_colname
+        # c1 is row, c2 is columns
+        # row is always the reference/denominator
+        if c1 != 'bias_rating':
+            publisher_VBB_counts = df_publisher.groupby([c1, 'bias_rating']).size().reset_index()
+            publisher_VBB_counts.columns = [c1, 'bias_rating', 'count']
+            publisher_VBB_counts['bias_rating'] = publisher_VBB_counts['bias_rating'].astype(str)
+            publisher_VBB_counts = publisher_VBB_counts.pivot(index=c1, columns='bias_rating', values='count').fillna(0)
+            publisher_VBB_counts['VBB_unique_count'] = publisher_VBB_counts['1'] + publisher_VBB_counts['2']
+
+            # Append unique VBB counts
+            df_count_colname = df_count.columns.name
+            df_count = df_count.join(publisher_VBB_counts[['VBB_unique_count']])
+            df_count.columns.name = df_count_colname
 
         return df_count
 
