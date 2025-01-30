@@ -6,13 +6,25 @@ class StatsCalculator:
     def __init__(self, query_parameters, query_data):
         self.query_data = query_data
         self.query_params = query_parameters
-
-    def calc_1D_stats(self, param):
+     
+    def calc_1D_stats(self, param, include_compared_publishers=False):
         """Calculate count of all topics in query"""
         df_stat = self.__show_counts_c1(self.query_data,
                                         self.query_params['selected_publisher'],
                                         param)
-        df_stat = df_stat.drop(['VBB_unique_count'], axis=1, errors='ignore')
+
+        if include_compared_publishers:
+            df_stat_compared = self.__show_counts_c1(self.query_data,
+                                                     self.query_params['compared_publishers'],
+                                                     param)
+            df_stat = pd.concat(
+                [
+                    df_stat.assign(publisher=self.query_params['selected_publisher']),
+                    df_stat_compared.assign(publisher='Others')
+                ]
+            )
+
+        df_stat = df_stat.drop(['VBB_unique_count', 'VB_unique_count', 'B_unique_count'], axis=1, errors='ignore')
         
         return df_stat
 
@@ -48,7 +60,7 @@ class StatsCalculator:
                                           self.query_params['selected_publisher'],
                                           param1,
                                           param2)
-        df_stat = df_stat.drop(['VBB_unique_count'], axis=1, errors='ignore')
+        df_stat = df_stat.drop(['VBB_unique_count', 'VB_unique_count', 'B_unique_count'], axis=1, errors='ignore')
         
         return df_stat
 
@@ -95,7 +107,10 @@ class StatsCalculator:
         'location', 'bias_rating', 'bias_category', 'topic'
         """
         # Filter publisher
-        df_publisher = df_corpus[df_corpus['publisher']==publisher]
+        if isinstance(publisher, set):
+            df_publisher = df_corpus[df_corpus['publisher'].isin(publisher)]
+        else:
+            df_publisher = df_corpus[df_corpus['publisher']==publisher]
         # List possible C1 options that can use group by
         simple_c1 = ['location', 'bias_rating']
 
@@ -152,7 +167,10 @@ class StatsCalculator:
         """
 
         ## Filter articles by publisher
-        df_publisher = df_corpus[df_corpus['publisher']==publisher]
+        if isinstance(publisher, set):
+            df_publisher = df_corpus[df_corpus['publisher'].isin(publisher)]
+        else:
+            df_publisher = df_corpus[df_corpus['publisher']==publisher]
         simple_c1_c2 = ['location', 'bias_rating']
         advanced_c1_c2 = ['topic', 'bias_category']
 
