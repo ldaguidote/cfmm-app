@@ -1,6 +1,7 @@
 from .api.handler import OpenAITextGenerator
 from .prompt.prompter import Prompt
 from .prompt.exceptions import PromptError
+from .prompt.utils import sort_and_filter_by_case_type, convert_df_to_json_list_v2
 
 class Generator:
     def __init__(self, query_params, query_data):
@@ -13,14 +14,17 @@ class Generator:
         response = self.api_handler.generate_text(prompt)
         return response
 
-    def generate_case_study(self, case_type, n_examples):
+    def generate_case_study(self, case_type):
 
         try:
-            prompt = self.prompt.build_case_studies(case_type, n_examples)
-            response = self.api_handler.generate_text(prompt)
-            return response
-        except:
-            pass
+            prompt_list = self.prompt.build_case_studies(case_type)
+            response_list = []
+            for prompt in prompt_list:
+                response = self.api_handler.generate_text(prompt)
+                response_list.append(response)
+            return response_list
+        except Exception as e:
+            raise ValueError(e)
 
     def generate_analysis(self, analysis_type, data):
         if analysis_type == 'topic':
