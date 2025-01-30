@@ -107,7 +107,7 @@ class StatsCalculator:
         'location', 'bias_rating', 'bias_category', 'topic'
         """
         # Filter publisher
-        if isinstance(publisher, set):
+        if isinstance(publisher, set) or isinstance(publisher, list):
             df_publisher = df_corpus[df_corpus['publisher'].isin(publisher)]
         else:
             df_publisher = df_corpus[df_corpus['publisher']==publisher]
@@ -167,7 +167,7 @@ class StatsCalculator:
         """
 
         ## Filter articles by publisher
-        if isinstance(publisher, set):
+        if isinstance(publisher, set) or isinstance(publisher, list):
             df_publisher = df_corpus[df_corpus['publisher'].isin(publisher)]
         else:
             df_publisher = df_corpus[df_corpus['publisher']==publisher]
