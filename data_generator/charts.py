@@ -9,7 +9,7 @@ class ChartBuilder:
             strip_background=element_rect(fill="white"),
             legend_title=element_blank(),
             legend_text=element_text(size=10, color="#474948"),
-            legend_position=(0.5, 0.94),
+            legend_position=(1, 0.94),
             legend_direction="horizontal",
             legend_background=element_rect(fill="white", color="white"),
             legend_box_background=element_rect(fill="white", color="white"),
@@ -40,6 +40,7 @@ class ChartBuilder:
             figure_size=(8, 6)
         )
 
+        
     def build_bar_chart(self, data, c1):
         res = data.set_index(c1)
         
@@ -139,6 +140,72 @@ class ChartBuilder:
         )
 
         return p
+    
+    
+    def build_stacked_bar_chart(self, data, c1):
+        res = data.set_index(c1)
+
+        if ('bias' in res.index.name) and ('rating' in res.index.name):
+            name_map = {
+                '-1': 'Inconclusive',
+                '0': 'Not Biased',
+                '1': 'Biased',
+                '2': 'Very Biased',
+                '1+2': 'Biased + Very Biased'
+            }
+            color_map = {
+                'Inconclusive': '#CAC6C2',
+                'Not Biased': '#f2eadf',
+                'Biased': '#eb8483',
+                'Very Biased': '#C22625',
+                'Biased + Very Biased': '#7d2927'
+            }
+        elif ('bias' in res.index.name) and ('cat' in res.index.name):
+            name_map = {
+                'generalisation': 'Generalisation',
+                'headline_or_imagery': 'Headline',
+                'misrepresentation': 'Misrepresentation',
+                'negative_behaviour': 'Negative Behaviour',
+                'prominence': 'Omit Due Prominence'
+            }
+            color_map = {
+                'Generalisation': '#4185A0',
+                'Headline': '#AA4D71',
+                'Misrepresentation': '#B85C3B',
+                'Negative Behaviour': '#C5BE71',
+                'Omit Due Prominence': '#7658A0'
+            }
+        else:
+            name_map = dict(zip(res.columns.astype(str), res.columns.astype(str)))
+            colors = ['#4185A0', '#AA4D71', '#B85C3B', '#C5BE71', '#7658A0']
+            color_map = dict(zip(res.columns.astype(str), colors))
+
+        # Attach plot prerequisites
+        res['name'] = res.index.astype(str).map(name_map).fillna('Others')
+        res['name'] = pd.Categorical(values=res['name'], categories=['Others'] + list(name_map.values()), ordered=True)
+        res['color'] = res['name'].astype(str).map(color_map).fillna('#e8e8e8')
+        publisher_tot = res.groupby(['publisher'])['count'].sum().reset_index()
+        publisher_tot.columns = ['publisher', 'tot']
+        res = res.merge(publisher_tot)
+        res['pct'] = (res['count']/res['tot']).fillna(0).multiply(100)
+        res['label'] = res['pct'].round(0).astype(int).astype(str) + '%'
+        res['label'] = res['label'] + ' (' + res['count'].astype(str) + ')'
+        res = res.sort_values('publisher', ascending=False)
+
+        p = (ggplot(res)
+        + geom_bar(aes(x='name', y='pct', fill='publisher'), stat='identity', position='dodge', width=0.60)
+        + geom_label(aes(x='name', y='pct', label='label', color='publisher'), position=position_dodge(width=0.50), ha='center', size=8, show_legend=False)
+        + scale_fill_manual(values=['#222222', '#949494'])
+        + scale_color_manual(values=['#222222', '#949494'])
+        + scale_y_continuous(limits=(0, res['pct'].max()*1.20), labels=lambda l: ["%d%%" % int(v) for v in l])
+        + ylab('% of Articles')
+        + xlab(c1.replace('_', ' ').title())
+        + self.theme
+        + coord_flip()
+        )
+
+        return p
+
 
     def build_heatmap_chart(self, data, c1, c2='bias_rating'):
         if 'bias' not in c2:
@@ -288,6 +355,7 @@ class ChartBuilder:
         )
 
         return p
+    
 
     def build_odds_chart(self, data, c2):
         res = data.set_index(c2)
