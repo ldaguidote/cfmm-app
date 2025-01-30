@@ -1,9 +1,9 @@
 import json
 import pandas as pd
 from .utils import (filter_dataset,
-                    filter_by_case_type, 
-                    resample_data, 
-                    convert_df_to_json_list)
+                    sort_and_filter_by_case_type, 
+                    convert_df_to_json_list_v2,
+                    restructure_analysis)
 
 class Prompt:
 
@@ -37,7 +37,7 @@ class Prompt:
         return prompt
     
 
-    def build_case_studies(self, case_type, n_examples):
+    def build_case_studies_deprecated(self, case_type, n_examples):
 
         # Filter out articles that do not fit the specified case type
         df = filter_by_case_type(self.data, case_type)
@@ -71,6 +71,55 @@ class Prompt:
         """
         
         return prompt
+
+
+    def build_case_studies(self, case_type):
+
+        # Filter out articles that do not fit the specified case type
+        df = sort_and_filter_by_case_type(self.data, case_type)
+
+        # Refine n examples and resample the dataframe
+        article_json = convert_df_to_json_list_v2(df, case_type)
+
+        base_prompt = f"""[SECTION: CASE STUDIES]
+        1. You will be provided the details of the analysis of a news article, containing the headline, bias category and analysis. 
+        Each analysis contains an Executive Summary, Analysis Key Points, Detailed Analysis, Overall Assessment, and Recommendations for improvement. 
+        The Detailed Analysis contains Instances of Negative Focus against Muslims or Islam, Journalistic merit of inclusion, Contextual analysis, 
+        Presence of Negative Passages, and Severity Rating. Summarize the analysis into three bullet points with 45-65 words each. 
+        Each bullet must summarize a specific aspect of the analysis.
+
+        Bullet 1 - Summarize the Executive Summary (what is the article about?)
+        Bullet 2 - Summarize the Detailed Analysis (justify the severity rating by demonstrating why the bias category was committed)
+        Bullet 3 - Provide an example to further support Bullet 2
+
+        2. Separate your answer for each article and use the format below. Each bullet must be separated by a newline:
+
+        [Place Headline Here]
+        Bullet point 1
+        Bullet point 2
+        Bullet point 3
+
+        The article is as follows:\n
+        """
+
+        followup_prompt = "Now, apply it to this article:\n"
+
+        prompt_list = []
+        for n, article in enumerate(article_json):
+            analysis = restructure_analysis(article['analysis'], case_type)
+            prompt_details = f"HEADLINE: {article['headline']}\n" \
+                    f"BIAS CATEGORY: {article['bias_category']}\n" \
+                    f"BIAS CATEGORY SCORE: {article['bias_category_score']}\n" \
+                    f"ANALYSIS:\n{analysis}\n\n"
+            
+            if n == 0:
+                prompt = base_prompt + prompt_details
+            elif n > 0:
+                prompt = followup_prompt + prompt_details
+            
+            prompt_list.append(prompt)
+
+        return prompt_list
     
 
     def analyze_topics(self, data):
