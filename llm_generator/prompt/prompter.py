@@ -92,7 +92,8 @@ class Prompt:
         Bullet 2 - Summarize the Detailed Analysis (justify the severity rating by demonstrating why the bias category was committed)
         Bullet 3 - Provide an example to further support Bullet 2
 
-        2. Separate your answer for each article and use the format below. Each bullet must be separated by a newline:
+        2. Separate your answer for each article and use the format below. Use UK/ British English spelling conventions (e.g. generalisation, radicalisation)
+        in writing the bullets. Each bullet must be separated by a newline:
 
         [Place Headline Here]
         Bullet point 1
