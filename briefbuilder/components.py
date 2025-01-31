@@ -71,7 +71,8 @@ class Component:
         return ChartBuilder()
     
     def _parse_response(self, llm_response):
-        pattern = re.compile(r"""\[(.*?)\]\s*([\s\-A-Za-z0-9\.,\'’.%\"+]+)\s*""")
+        # pattern = re.compile(r"""\[(.*?)\]\s*([\s\-A-Za-z0-9\.,\'’.%\"+]+)\s*""")
+        pattern = re.compile(r"^\s*\[(.*?)\]\s*((?:\n|.)*)$")
         # pattern = re.compile(r"""\[(.*?)\]\s*(.*)\s*""")
         parsed_response = re.findall(pattern, llm_response)
         
@@ -436,7 +437,7 @@ class CaseStudyComponent(Component):
 
             # If no case studies of the type is found, return an empty list, else return the subschema
             if len(response_list) == 0 or response_list == None:
-                return {subsection: []}
+                return {subsection: ["There are no more case studies for this bias category."]}
             else:
                 article_titles_list, bullets_list = [], []
                 for response in response_list:
