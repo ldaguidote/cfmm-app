@@ -21,7 +21,7 @@ class ReportComponentFactory:
 
     def __initialize_components(self):
         self.component_report_parameters = ReportParametersComponent(self.stats, self.fr_gen)
-        self.component_case_studies      = CaseStudyComponent(self.stats, self.llm_gen)
+        self.component_case_studies      = CaseStudyComponent(self.stats, self.fr_gen)
         self.component_pub_performance   = PublisherPerformanceComponent_withFixedResponses(self.stats, self.fr_gen)
         self.component_pub_comparison    = PubisherComparisonComponent_withFixedResponses(self.stats, self.fr_gen)
         self.component_conclusions       = ConclusionsComponent(self.stats, self.llm_gen)
