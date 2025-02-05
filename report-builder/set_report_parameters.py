@@ -17,15 +17,18 @@ import streamlit.components.v1 as components
 
 query_constraints = initialize_parameter_query()
 query_constraints['bias_category'] = [
-    'Misrepresentation', 'Negative Aspects and Behaviors', 'Generalizing Claims',
-    'Due Prominence', 'Headlines'
+            'Generalizing Claims',
+            'Omit Due Prominence',
+            'Negative Aspects and Behaviors',
+            'Misrepresentation',
+            'Headline Bias'
 ]
-query_constraints['topics'] = [
-    'Accidents and Natural Disasters', 'Business and Economy', "Women's and Children's Rights",
-    'Crimes and Arrests', 'Education', 'Hate Speech and Discrimination', 'Health',
-    'Immigration', 'Minorities and Human Rights', 'Politics', 'Religion',
-    'Sports, Culture, and Entertainment', 'Terrorism and Extremism'
-]
+# query_constraints['topics'] = [
+#     'Accidents and Natural Disasters', 'Business and Economy', "Women's and Children's Rights",
+#     'Crimes and Arrests', 'Education', 'Hate Speech and Discrimination', 'Health',
+#     'Immigration', 'Minorities and Human Rights', 'Politics', 'Religion',
+#     'Sports, Culture, and Entertainment', 'Terrorism and Extremism'
+# ]
 
 ## Initialize generate button disable state
 
@@ -219,7 +222,7 @@ if btn_preview:
                 partial_query=False
             )
             st.success(f'{len(df)} articles retrieved.')
-            df = df[['date_published', 'publisher', 'title']]
+            df = df[['publish_date', 'publisher', 'headline']]
             st.dataframe(df)
         
         else:

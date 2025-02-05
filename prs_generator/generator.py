@@ -247,7 +247,7 @@ class Prs:
             if dt_start.year == dt_end.year and dt_start.month == dt_end.month:
                 subtitle = dt_start.strftime('%B %Y')
             else:
-                subtitle = f'{dt_start.strftime('%B %Y')} to {dt_end.strftime('%B %Y')}'
+                subtitle = f"{dt_start.strftime('%B %Y')} to {dt_end.strftime('%B %Y')}"
             self.prs = self._render_title_slide(title, subtitle)
 
         return self.prs
