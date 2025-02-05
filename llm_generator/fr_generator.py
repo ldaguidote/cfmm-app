@@ -61,8 +61,8 @@ class FixedResponseGenerator:
             response = f'{str(biased_article_count)} articles from the {self.query_params["selected_publisher"]} are "Biased" or "Very Biased"'
 
         elif analysis_type == 'bias_category':
-            highly_commited_bias_cat = data.sort_values(by='count', ascending=False)['bias_category'].values[0].title()
-            response = f'{highly_commited_bias_cat} is the publisher\'s most commited bias category'
+            bias_cat = data.sort_values(by='count', ascending=False).iloc[0]
+            response = f'{bias_cat['count']} articles from the {self.query_params["selected_publisher"]} show {bias_cat['bias_category'].title()}'
 
         elif analysis_type == 'bias_rating_vs_topics':
             bias_count = data.sum(axis=0)
@@ -78,7 +78,7 @@ class FixedResponseGenerator:
             data = data.T.sort_values(by=data.index[0], ascending=False).head(1)
             bias = data.index[0].title()
             topic = data.columns[0].title()
-            response = f'{bias} is the most common bias committed in articles about {topic}'
+            response = f'{bias} is the most common bias in articles about {topic}'
 
         elif analysis_type == 'bias_rating_comparison':
             data = data[data['bias_rating'] > 0].groupby(['publisher'])['count'].sum()
@@ -87,11 +87,11 @@ class FixedResponseGenerator:
             response = f"{self.query_params['selected_publisher']} published {publisher_count} biased articles compared to {others_count} from other publishers"
 
         elif analysis_type == 'bias_category_comparison':
-            data = data.groupby(['publisher', 'bias_category'])['count'].sum().unstack().fillna(0)
+            data = data.groupby(['publisher', 'bias_category'])['count'].sum().unstack().fillna(0).T
             data['Total'] = data.sum(axis=1)
-            data = data.sort_values(by='Total', ascending=False).drop(columns='Total')
-            publisher_bias_cat = data.loc[self.query_params['selected_publisher']].sort_values(ascending=False).head(1).index[0]
-            response = f"{self.query_params['selected_publisher']} has the highest tendency to commit {publisher_bias_cat.title()}"
+            data = data.sort_values(by='Total', ascending=False).drop(columns='Total').T
+            data = data.iloc[:, 0]
+            response = f"{data.index[0]} accounts for {str(data[0])} counts of {data.name.title()} compared to {str(data[1])} articles from {data.index[1]} in the same time period"
 
         else:
             raise PromptError('Invalid analysis type. Must be either "topic", "bias_rating", "bias_category" or "tendency"')
