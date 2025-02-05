@@ -12,7 +12,8 @@ class FixedResponseGenerator:
             
             if isinstance(v, list):
                 if len(v) > 0:
-                    v = '\n\t' +'\n\t'.join(v)
+                    # v = '\n\t' +'\n\t'.join(v)
+                    v = ', '.join(v)
                     query_params_modified[k] = v
 
             else:
