@@ -1,9 +1,25 @@
 from .prompt.exceptions import PromptError
-
+from .prompt.utils import (filter_dataset,
+                          sort_and_filter_by_case_type, 
+                          convert_df_to_json_list_v2,
+                          restructure_analysis)
 class FixedResponseGenerator:
 
-    def __init__(self, query_params, query_data):
+    def __init__(self, query_params, query_results):
         self.query_params = query_params
+        self.__parse_parameters(query_params, query_results)
+
+
+    def __parse_parameters(self, query_params, query_results):
+
+        self.selected_publisher = query_params['selected_publisher']
+        self.start_date = query_params['start_date']
+        self.end_date = query_params['end_date']
+        self.publishers = ', '.join(query_params['compared_publishers'])
+        self.bias_categories = ', '.join(query_params['bias_category'])
+        self.topics = ', '.join(query_params['topics'])        
+
+        self.data = filter_dataset(query_results, publisher=self.selected_publisher)
 
 
     def generate_methodology(self):
@@ -23,6 +39,22 @@ class FixedResponseGenerator:
         return query_params_modified
 
 
+    def generate_case_study(self, case_type):
+        # Filter out articles that do not fit the specified case type
+        df = sort_and_filter_by_case_type(self.data, case_type)
+
+        # Refine n examples and resample the dataframe
+        article_json = convert_df_to_json_list_v2(df, case_type)
+
+        response_list = []
+        for n, article in enumerate(article_json):
+            headline = article['headline']
+            analysis = restructure_analysis(article['analysis'], case_type)
+            response = f'[{headline}] {analysis}'
+            response_list.append(response)
+
+        return response_list
+
     def generate_analysis(self, analysis_type, data):
         if analysis_type == 'bias_rating':
             biased_article_count = data[data['bias_rating'] > 0]['count'].sum()
@@ -30,7 +62,7 @@ class FixedResponseGenerator:
 
         elif analysis_type == 'bias_category':
             highly_commited_bias_cat = data.sort_values(by='count', ascending=False)['bias_category'].values[0].title()
-            response = f'{highly_commited_bias_cat} is the publisher\'s most commited bias catergory'
+            response = f'{highly_commited_bias_cat} is the publisher\'s most commited bias category'
 
         elif analysis_type == 'bias_rating_vs_topics':
             bias_count = data.sum(axis=0)

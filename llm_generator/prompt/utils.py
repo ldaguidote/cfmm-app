@@ -99,8 +99,8 @@ def sort_and_filter_by_case_type(df, case_type):
     if case_type in case_dict.keys():
         case_type = case_dict[case_type]
         df = df[df.article_id.duplicated() == False]
-        sorted_df =  df.sort_values([case_type, 'bias_rating', 'publish_date'], ascending=False)
-        filtered_df = sorted_df[sorted_df[case_type] != "NA"].head()
+        sorted_df =  df.sort_values([f'{case_type}_score', 'bias_rating', 'publish_date'], ascending=False)
+        filtered_df = sorted_df[(sorted_df[f'{case_type}_score'] != "NA") & (sorted_df[f'{case_type}_score'] != 'Very Low')].head()
         return filtered_df
 
     else:
@@ -145,7 +145,8 @@ def restructure_analysis(analysis, case_type):
         }
     category = category_map[case_type]
 
-    allowed_sections = ['# Executive Summary', '# Analysis', '# Overall Assessment', '# Recommendations'] + ['## ' + category]
+    # allowed_sections = ['# Executive Summary', '# Analysis', '# Overall Assessment', '# Recommendations'] + ['## ' + category]
+    allowed_sections = ['# Executive Summary'] + ['## ' + category]
     
     tag_list = []
     analysis_lines = []
