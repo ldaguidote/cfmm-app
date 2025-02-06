@@ -62,7 +62,7 @@ class FixedResponseGenerator:
 
         elif analysis_type == 'bias_category':
             bias_cat = data.sort_values(by='count', ascending=False).iloc[0]
-            response = f'{bias_cat['count']} articles from the {self.query_params["selected_publisher"]} show {bias_cat['bias_category'].title()}'
+            response = f"""{bias_cat['count']} articles from the {self.query_params["selected_publisher"]} show {bias_cat['bias_category'].title()}"""
 
         elif analysis_type == 'bias_rating_vs_topics':
             bias_count = data.sum(axis=0)

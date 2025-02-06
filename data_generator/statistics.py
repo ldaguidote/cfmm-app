@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import scipy.stats as stats
 
 class StatsCalculator:
@@ -143,7 +144,7 @@ class StatsCalculator:
 
         elif c1 == 'topic':
             # Prepare exploded topics
-            s_topics = df_publisher[c1].apply(lambda x: x.split(" | "))
+            s_topics = df_publisher[c1].apply(lambda x: x.split(" | ") if type(x)==str else np.nan)
             df_count = s_topics.explode().reset_index().groupby(c1).size().reset_index(name='count')
             df_count = df_count.replace('', 'Unknown')
             
@@ -178,7 +179,7 @@ class StatsCalculator:
             if c1 not in simple_c1_c2 or c2 not in simple_c1_c2:
                 if c1 == 'topic' or c2 == 'topic':
                     # Split topic list
-                    df_publisher['topic'] = df_publisher['topic'].apply(lambda x: x.split(" | "))
+                    df_publisher['topic'] = df_publisher['topic'].apply(lambda x: x.split(" | ") if type(x)==str else np.nan)
                     # Explode into singular topics
                     df_publisher = df_publisher.explode('topic')
 

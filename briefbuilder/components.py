@@ -219,9 +219,9 @@ class PublisherPerformanceComponent_withFixedResponses(Component):
 
             elif subsection in ['bias_rating_vs_topics', 'bias_category_vs_topics']:
                 param = subsection.strip('_vs_topics')
-                data = self.stat.calc_2D_biased_stats('topic_name', param)
+                data = self.stat.calc_2D_biased_stats('topic', param)
                 chart_title = self.gen.generate_analysis(analysis_type=subsection, data=data)
-                chart.build_heatmap_chart(data, 'topic_name', param).save(chart_filepath)
+                chart.build_heatmap_chart(data, 'topic', param).save(chart_filepath)
 
             else:
                 raise ValueError()

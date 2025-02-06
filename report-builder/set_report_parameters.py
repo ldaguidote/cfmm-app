@@ -249,28 +249,28 @@ if st.session_state.run:
             df = st.session_state['df']
             progress_container.progress(30, text="Generating charts and captions...(Task 2 of 3)")
             rcf = ReportComponentFactory(dict_params, df)
-            try:
-                rcf.run()
-            except:
-                st.error("Error in compiling generated text. Please rerun again.")
-                st.session_state.run = False
-            else:
-                dict_rcf = rcf.results
-                st.session_state.result = dict_rcf
-                factory_json = json.dumps(dict_rcf)
-                progress_container.progress(60, text="Creating slides...(Task 3 or 3)")
-                prs = Prs('template.pptx', factory_json)
-                prs.add_Title_section('Briefing Pack for BBC', [start_date, end_date])
-                prs.add_Introduction_section('Introduction', 'Placeholder text')
-                prs.add_Methodology_section(use_json=True)
-                prs.add_KeyFindings_section(use_json=True)
-                prs.add_PublisherPerformance_section(use_json=True)
-                prs.add_PublisherComparison_section(use_json=True)
-                prs.add_UseCases_section(use_json=True)
-                prs.add_Conclusion_section(use_json=True)
-                prs.add_Recommendations_section('Recommendations', 'Placeholder text')
-                prs.save(binary_output)
-                progress_container.progress(100, text="Done!")
+        # try:
+            rcf.run()
+        # except:
+        #     st.error("Error in compiling generated text. Please rerun again.")
+        #     st.session_state.run = False
+        # else:
+            dict_rcf = rcf.results
+            st.session_state.result = dict_rcf
+            factory_json = json.dumps(dict_rcf)
+            progress_container.progress(60, text="Creating slides...(Task 3 or 3)")
+            prs = Prs('template.pptx', factory_json)
+            prs.add_Title_section('Briefing Pack', [start_date, end_date])
+            prs.add_Introduction_section('Introduction', 'Placeholder text')
+            prs.add_Methodology_section(use_json=True)
+            prs.add_KeyFindings_section(use_json=True)
+            prs.add_PublisherPerformance_section(use_json=True)
+            prs.add_PublisherComparison_section(use_json=True)
+            prs.add_UseCases_section(use_json=True)
+            prs.add_Conclusion_section(use_json=True)
+            prs.add_Recommendations_section('Recommendations', 'Placeholder text')
+            prs.save(binary_output)
+            progress_container.progress(100, text="Done!")
 
     st.session_state.run = False
 
