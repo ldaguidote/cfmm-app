@@ -58,12 +58,29 @@ def build_query(selected_publisher, start_date, end_date, compared_publishers, b
                aa.misrepresentation_analysis,
                aa.is_current,
                aa.bias_rating,
-               tl.topic_name
+               tl.topic
         FROM articles a 
         LEFT JOIN article_analyses aa on a.article_id = aa.article_id
-        LEFT JOIN topic_list tl on a.article_id = tl.article_id
-        WHERE (publish_date >= '{start_date}' AND publish_date <= '{end_date}')
         """
+    
+    if len(topics) > 0:
+        topic_sql ="""
+        LEFT JOIN (
+            SELECT
+                article_id,
+                GROUP_CONCAT(topic_name, ' | ') AS topic
+            FROM topic_list
+        """
+        topic_sql += ' WHERE (' + ' OR '.join([f'topic_name LIKE "%{i}%"' for i in topics]) + ')'
+
+        topic_sql +="""
+            GROUP BY article_id
+        ) tl on a.article_id = tl.article_id
+        """
+        sql += topic_sql
+    
+    date_sql = f"WHERE (publish_date >= '{start_date}' AND publish_date <= '{end_date}')"
+    sql += date_sql
 
     if partial_query:
         publishers = [selected_publisher]
@@ -74,21 +91,17 @@ def build_query(selected_publisher, start_date, end_date, compared_publishers, b
         publisher_sql = ' AND (' + ' OR '.join([f"publisher LIKE '%{i}%'" for i in publishers]) + ')'
         sql += publisher_sql
 
-    if len(bias_category) > 0:
-        bias_col = {
-            'Generalizing Claims': 'generalisation',
-            'Omit Due Prominence': 'omit_due_prominence',
-            'Negative Aspects and Behaviors': 'negative_aspects',
-            'Misrepresentation': 'misrepresentation',
-            'Headline Bias': 'headline_bias'
-        }
-        bias_sql = ' AND (' + ' OR '.join([f"{bias_col[i]} = 1" for i in bias_category]) + ')'
-        sql += bias_sql
+    # if len(bias_category) > 0:
+    #     bias_col = {
+    #         'Generalizing Claims': 'generalisation',
+    #         'Omit Due Prominence': 'omit_due_prominence',
+    #         'Negative Aspects and Behaviors': 'negative_aspects',
+    #         'Misrepresentation': 'misrepresentation',
+    #         'Headline Bias': 'headline_bias'
+    #     }
+    #     bias_sql = ' AND (' + ' OR '.join([f"{bias_col[i]} = 1" for i in bias_category]) + ')'
+    #     sql += bias_sql
 
-    if len(topics) > 0:
-        topic_sql = ' AND (' + ' OR '.join([f'topic_name LIKE "%{i}%"' for i in topics]) + ')'
-        sql += topic_sql
-    
     return sql
 
 def execute_query_to_dataframe(sql):

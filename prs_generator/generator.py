@@ -296,7 +296,7 @@ class Prs:
 
     def add_Methodology_section(self, title='', text='', use_json=False):
         if use_json:
-            key = 'Methodology'
+            key = 'Report Parameters'
             d = self.content_dict[key]
 
             if count_levels(d) == 1:
