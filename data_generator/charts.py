@@ -62,10 +62,10 @@ class ChartBuilder:
         elif ('bias' in res.index.name) and ('cat' in res.index.name):
             name_map = {
                 'generalisation': 'Generalisation',
-                'headline_or_imagery': 'Headline',
+                'headline_bias': 'Headline',
                 'misrepresentation': 'Misrepresentation',
-                'negative_behaviour': 'Negative Behaviour',
-                'prominence': 'Omit Due Prominence'
+                'negative_aspects': 'Negative Behaviour',
+                'omit_due_prominence': 'Omit Due Prominence'
             }
             color_map = {
                 'Generalisation': '#4185A0',
@@ -163,10 +163,10 @@ class ChartBuilder:
         elif ('bias' in res.index.name) and ('cat' in res.index.name):
             name_map = {
                 'generalisation': 'Generalisation',
-                'headline_or_imagery': 'Headline',
+                'headline_bias': 'Headline',
                 'misrepresentation': 'Misrepresentation',
-                'negative_behaviour': 'Negative Behaviour',
-                'prominence': 'Omit Due Prominence'
+                'negative_aspects': 'Negative Behaviour',
+                'omit_due_prominence': 'Omit Due Prominence'
             }
             color_map = {
                 'Generalisation': '#4185A0',
@@ -223,10 +223,10 @@ class ChartBuilder:
         elif ('bias' in res.index.name) and ('cat' in res.index.name):
             c1_name_map = {
                 'generalisation': 'Generalisation',
-                'headline_or_imagery': 'Headline',
+                'headline_bias': 'Headline',
                 'misrepresentation': 'Misrepresentation',
-                'negative_behaviour': 'Negative Behaviour',
-                'prominence': 'Omit Due Prominence'
+                'negative_aspects': 'Negative Behaviour',
+                'omit_due_prominence': 'Omit Due Prominence'
             }
         else:
             c1_name_map = dict(zip(res.index.astype(str), res.index.astype(str)))
@@ -242,10 +242,10 @@ class ChartBuilder:
         elif ('bias' in res.columns.name) and ('cat' in res.columns.name):
             c2_name_map = {
                 'generalisation': 'Generalisation',
-                'headline_or_imagery': 'Headline',
+                'headline_bias': 'Headline',
                 'misrepresentation': 'Misrepresentation',
-                'negative_behaviour': 'Negative Behaviour',
-                'prominence': 'Omit Due Prominence'
+                'negative_aspects': 'Negative Behaviour',
+                'omit_due_prominence': 'Omit Due Prominence'
             }
         else:
             c2_name_map = dict(zip(res.columns.astype(str), res.columns.astype(str)))

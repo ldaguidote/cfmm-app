@@ -129,10 +129,10 @@ class StatsCalculator:
             # Prepare expected bias categories
             expected_categories = {
                 'generalisation',
-                'prominence',
-                'negative_behaviour',
+                'omit_due_prominence',
+                'negative_aspects',
                 'misrepresentation',
-                'headline_or_imagery'
+                'headline_bias'
             }
             # Find bias categories that are present in dataframe
             actual_categories = list(set(df_publisher.columns).intersection(expected_categories))
@@ -187,10 +187,10 @@ class StatsCalculator:
                     # Prepare expected bias categories
                     expected_categories = {
                         'generalisation',
-                        'prominence',
-                        'negative_behaviour',
+                        'omit_due_prominence',
+                        'negative_aspects',
                         'misrepresentation',
-                        'headline_or_imagery'
+                        'headline_bias'
                     }
                     # Find bias categories that are present in dataframe
                     actual_categories = list(set(df_publisher.columns).intersection(expected_categories))
@@ -251,12 +251,12 @@ class StatsCalculator:
 
         elif c2 == "bias_category":
             expected_categories = {
-                    'generalisation',
-                    'prominence',
-                    'negative_behaviour',
-                    'misrepresentation',
-                    'headline_or_imagery'
-                }
+                'generalisation',
+                'omit_due_prominence',
+                'negative_aspects',
+                'misrepresentation',
+                'headline_bias'
+            }
             # Find bias categories that are present in dataframe
             actual_categories = list(set(df_all.columns).intersection(expected_categories))
             df_all = df_all[['publisher']+actual_categories]
